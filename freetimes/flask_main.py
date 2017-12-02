@@ -300,11 +300,14 @@ def choose():
 
 
     return render_template('main.html')
-@app.route("/_userSubmit", methods=["POST"]):
+@app.route("/_userSubmit", methods=["POST"])
+def _userSubmit():
     dbclient = MongoClient(MONGO_CLIENT_URL)
     db = getattr(dbclient, CONFIG.DB)
     collection = db.meets
-    myObject = collection.find({"user_id":str(CURRENT_MEET_ID)}
+    myObject = None
+    for item in collection.find({"user_id":(CURRENT_MEET_ID)}):
+        myObject = item
     for item in CURRENT_BUSY_LIST:
         myObject['busy_list'].append(
         {
@@ -372,7 +375,9 @@ def _adminLogin():
     dbclient = MongoClient(MONGO_CLIENT_URL)
     db = getattr(dbclient, CONFIG.DB)
     collection = db.meets
-    yourData = collection.find({"admin_id":str(flask.request.form.get("adminID"))})
+    yourData = None
+    for item in collection.find({"admin_id":(flask.request.form.get("adminID"))}):
+        yourData = item
     flask.g.eventlist = yourData['busy_list']
     return render_template("endscreen")
 
