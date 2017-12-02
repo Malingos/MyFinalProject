@@ -31,7 +31,7 @@ if __name__ == "__main__":
     CONFIG = config.configuration()
 else:
     CONFIG = config.configuration(proxied=True)
-
+DUMMY = False
 app = flask.Flask(__name__)
 app.debug=CONFIG.DEBUG
 app.logger.setLevel(logging.DEBUG)
@@ -274,6 +274,15 @@ def main2():
             submitList.append(myDict)
         flask.g.freeList = submitList
     return render_template('main.html')
+
+@app.route("/choose2")
+def choose2():
+    credentials = valid_credentials()
+    if not credentials:
+        return flask.redirect(flask.url_for('oauth2callback'))
+    gcal_service = get_gcal_service(credentials)
+    flask.g.calendars = list_calendars(gcal_service)
+    return render_template('main2.html')
 @app.route("/choose")
 def choose():
     ## We'll need authorization to list calendars
@@ -293,12 +302,6 @@ def choose():
         app.logger.debug(cal)#need to see if there's an identifying variable
         #app.logger.debug(cal.events())
     #flask.g.busyTimes = None
-
-
-
-
-
-
     return render_template('main.html')
 @app.route("/_userSubmit", methods=["POST"])
 def _userSubmit():
@@ -306,8 +309,7 @@ def _userSubmit():
     db = getattr(dbclient, CONFIG.DB)
     collection = db.meets
     myObject = None
-    for item in collection.find({"user_id":(CURRENT_MEET_ID)}):
-        myObject = item
+    myObject = collection.find_one({"user_id": str(CURRENT_MEET_ID)})
     for item in CURRENT_BUSY_LIST:
         myObject['busy_list'].append(
         {
@@ -352,12 +354,20 @@ def _select():
         calendar.append(ID)
     flask.g.busyTimes = None
     return flask.redirect(flask.url_for('main'))
-
+@app.route("/_userselect",methods=["POST"])
+def _userselect():
+    calendarIDList=flask.request.form.getlist("calendar")
+    global calendar
+    service = get_gcal_service(valid_credentials())
+    for ID in calendarIDList:
+        calendar.append(ID)
+    flask.g.busyTimes = None
+    return flask.redirect(flask.url_for('main2'))
 @app.route("/_getData", methods=["POST"])
 def _getData():
     app.logger.debug("User inputting meeting data")
     global CURRENT_MEET_ID
-    CURRENT_MEET_ID = flask.request.forms.get("meetID")
+    CURRENT_MEET_ID = flask.request.form.get("meetID")
     return render_template("main2.html")
 @app.route("/_deleteBusy", methods=["POST"])
 def _deleteBusy():
@@ -376,10 +386,21 @@ def _adminLogin():
     db = getattr(dbclient, CONFIG.DB)
     collection = db.meets
     yourData = None
-    for item in collection.find({"admin_id":(flask.request.form.get("adminID"))}):
-        yourData = item
+    test = False
+    if test:
+        print("****************{}****************".format(flask.request.form.get("adminID")))
+        print("****************{}****************".format(collection.find({"admin_id":2652715024})))
+        for item in collection.find({"admin_id":2652715024}):
+            print("***********************{}*********************".format(item))
+            print("&&&&&&&&&&&&adminID: {} &&&&&&&&&&&&&&&&&".format(item['admin_id']))
+    adminid = flask.request.form.get("adminID")
+    #for item in collection.find({"admin_id": adminid}):
+    #    yourData = item
+        #flask.g.eventlist = item['busy_list']
+    yourData = collection.find_one({"admin_id": int(adminid)})
     flask.g.eventlist = yourData['busy_list']
-    return render_template("endscreen")
+    #print("{}".format(flask.g.eventlist))
+    return render_template("endscreen.html")
 
 @app.route("/_newScheduler", methods=["POST"])
 def _newScheduler():
@@ -506,6 +527,8 @@ def oauth2callback():
     ## but for the moment I'll just log it and go back to
     ## the main screen
     app.logger.debug("Got credentials")
+    if DUMMY:
+        return flask.redirect(flask.url_for('choose2'))
     return flask.redirect(flask.url_for('choose'))
 
 #####
@@ -518,7 +541,11 @@ def oauth2callback():
 #      page, where we may put the new information to use.
 #
 #####
-
+@app.route("/dummy", methods=["POST"])
+def dummy():
+    global DUMMY
+    DUMMY = True
+    return flask.redirect(flask.url_for("choose2"))
 @app.route('/setrange', methods=['POST'])
 def setrange():
     """
