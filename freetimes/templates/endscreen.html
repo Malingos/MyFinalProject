@@ -1,0 +1,13 @@
+<!-- this is the screen where the admin views the collective free times as they are currently, and can decide to lock them and send an email to the members -->
+<<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+<title>Appointments</title>
+</head>
+
+<body>
+    <h1>Collective Busy Times</h1>
+    {%for item in g.eventlist%}
+        <p> {{item['start']}} - {{item['end']}} </p>
+    {%endfor%}
+</body>
+</html>

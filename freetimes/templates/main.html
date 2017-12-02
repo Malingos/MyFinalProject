@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+<title>Appointments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" type="text/css"
+     href="//cdn.jsdelivr.net/bootstrap/latest/css/bootstrap.css"
+/>
+
+
+<link rel="stylesheet" type="text/css"
+    href="/static/css/busy.css"
+/>
+
+<!-- jquery from a content distribution network; probably cached -->
+<script type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
+</script>
+
+<!-- Ideally the rest of our javascript dependencies would be
+     bundled and minified with 'browserify', but I've found that
+     it difficult to handle browserify dependencies for class
+     projects.  So, we'll pick up moment and a date range picker
+     from CDNs instead.
+-->
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+
+
+</head>
+
+<body>
+<div class="container">
+
+<!-- <h1>Busy times</h1>
+{% if g.busyTimes is defined %}
+  {% for time in g.busyTimes %}
+    <p>Start time: {{time['start']}}</p>
+    <p>End time: {{time['end']}}</p>
+    <p>Event: {{time['event']}}</p>
+    <p>Calendar: {{time['calendar']}}</p>
+  {% endfor %}
+{% endif %} -->
+<h1>Free Times</h1>
+<!--{% if g.freeList is defined %}
+    {% for item in g.freeList %}
+        <p>Free From: {{item['start']}}</p>
+        <p>To: {{item['end']}}</p>
+        <br>
+    {%endfor%}
+{%endif%}-->
+<p>Was never able to get this to work sadly</p>
+
+
+<h1>Busy Times</h1>
+{% if g.busyTimes is defined %}
+<form  action="/_deleteBusy" method=POST>
+<!-- returns a list of eventID's that are in the busy dict for me to ignore -->
+<fieldset>
+    <legend>Busy Times: Select some and hit "Submit" to Ignore</legend>
+    {%for time in g.busyTimes %}
+    <p> Start Time: {{time['start']}}</p>
+    <p> End Time: {{time['end']}}</p>
+    <p> Event: {{time['end']}}</p>
+    <p> Calendar: {{time['calendar']}}</p>
+    <input type="checkbox" id="busy" name="busy" value="{{time['id']}}"/>
+    <label for="busy">{{time['event']}}</label>
+
+    <br>
+    {%endfor%}
+    <button type="submit">Submit</button>
+</fieldset>
+</form>
+{%endif%}
+
+<h1> Click this button if you are happy with your current busy times </h1>
+<form action="/_doneBusy" method="POST">
+    <button type="submit">Done with busy times</button>
+</form>
+<!--
+  - If there are any warnings or other messages from a prior action,
+  - they appear above the rest of the content, just until the next
+  - action.
+  -->
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<h2>Date range</h2>
+  <form action="/setrange" method="post">
+  <input type="text" name="daterange" size="12"
+    {% if session.daterange is defined %}
+         value="{{session.daterange}}"
+    {% endif %}
+     class="pull-down"
+     style="background: #fff; cursor: pointer; padding: 5px 10px;
+     border: 1px solid #ccc; width: 12em" >
+  <script type="text/javascript">
+  $(function() {
+  $('input[name="daterange"]').daterangepicker(
+    {    ranges: {
+           'Today': [moment(), moment()],
+           'Tomorrow':[moment().add(1, 'days'),
+                       moment().add(1, 'days')],
+           'This week':[moment(), moment().endOf('week')],
+           'Next week':[moment().add(7, 'days').startOf('week'),
+                        moment().add(7, 'days').endOf('week')],
+           'This month':[moment(), moment().endOf('month')],
+           'Within two weeks':[moment(),moment().add(15, 'days')]
+        }}
+       );
+    });
+  </script>
+
+<br /><input type="submit" value="Choose" />
+</form>
+
+    <!--
+    Show the calendar list (if we have it).  This will need to be turned into
+    a form from which calendars can be picked. Up to three entries are
+    shown in each row (but the order is across then down; I would
+    prefer down then across).
+    -->
+<!-- {% if g.calendars is defined  %}
+  <div class="row">
+  {% for cal in g.calendars if cal.selected %}
+          <div class="col-md-4">
+	   {{ cal.summary }}
+     <div class="select_button">
+       <form method="POST" action="/_select" id="select" name="select">
+          <input type="hidden" value="{{cal.id}}" name="selectToken"/>
+         <label for "submit">Click to select:</label>
+         <input type="submit" name="submit" id="submit"/>
+     </form>
+     </div>
+          </div>
+
+         {% if loop.index is divisibleby 3 %}
+          </div> <div class="row">
+         {% endif %}
+  {% endfor %}
+  </div>
+{% endif %} -->
+
+{% if g.calendars is defined %}
+    <form method="POST" action="/_select" id="select" name="select">
+    <fieldset>
+        <legend> Choose your calendars </legend>
+    {% for cal in g.calendars if cal.selected %}
+        <div>
+            <input type="checkbox" id="calendar" name="calendar" value="{{cal['id']}}" />
+            <label for="calendar"> {{cal['summary']}} </label>
+        </div>
+    {% endfor %}
+    <div>
+        <button type="submit">Submit Calendars</button>
+    </div>
+    </fieldset>
+    </form>
+{% endif %}
+
+  </div>  <!-- container (for bootstrap) -->
+  </body> </html>

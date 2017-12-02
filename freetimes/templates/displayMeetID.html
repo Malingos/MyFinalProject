@@ -1,0 +1,22 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+<title>Appointments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+</head>
+<body>
+<div class="container">
+    <h1> Meeting ID </h1>
+    <h2> This is the ID you give to others </h2>
+    {%if g.meet%}
+        <p> {{g.meet}} </p>
+    {%endif%}
+    <h1> ADMIN ID </h1>
+    <h2> You will need this ID if you want to access the admin view after the submissions </h2>
+    <p> {{g.admin}} </p>
+    <form action="/_gotoMain" method="POST">
+        <input type="hidden" name="meetID" id="meetID" value="{{g.meet}}"/>
+        <button type="SUBMIT">I got my meeting ID</button>
+    </form>
+</div></body>
